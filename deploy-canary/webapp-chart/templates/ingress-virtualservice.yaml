@@ -4,7 +4,7 @@ metadata:
   name: webapp-ingress-vs
 spec:
   hosts:
-  - {{ .Values.istio.host }}
+  - "{{ .Values.istio.host }}"
   gateways:
   - {{ .Values.istio.gatewayName }}
   http:
