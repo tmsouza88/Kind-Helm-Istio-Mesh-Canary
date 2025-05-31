@@ -1,0 +1,17 @@
+image:
+  repository: docker.io/kennethreitz/httpbin
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+
+service:
+  name: webapp
+  port: 80
+
+istio:
+  gatewayPort: 80
+  gatewayName: webapp-gateway
+  host: "*"
+  canary:
+    v1Weight: 90
+    v2Weight: 10
