@@ -5,7 +5,7 @@ metadata:
   namespace: default
 spec:
   selector:
-    istio: ingressgateway # usa o gateway padrão
+    istio: ingressgateway # use the default gateway
   servers:
   - port:
       number: 80
