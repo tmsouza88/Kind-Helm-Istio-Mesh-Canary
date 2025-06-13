@@ -1,170 +1,187 @@
-🎯 Project Objective
+# 🇺🇸 Kind + Istio + Helm - Canary Deployment Demo  
+# 🇧🇷 Demonstração de Canary Deployment com Kind, Istio e Helm
+
+> ⚙️ Mini lab local para estudo de Service Mesh, Canary Releases, Observabilidade e Segurança com Istio no Kubernetes
+
+---
+
+## 📚 Table of Contents | Índice
+
+- [🎯 Project Goal | Objetivo do Projeto](#-project-goal--objetivo-do-projeto)
+- [✅ Features | Funcionalidades](#-features--funcionalidades)
+- [🧱 Architecture | Arquitetura](#-architecture--arquitetura)
+- [📁 File Structure | Estrutura dos Arquivos](#-file-structure--estrutura-dos-arquivos)
+- [🚀 Usage Guide | Guia de Uso](#-usage-guide--guia-de-uso)
+- [📊 Observability | Observabilidade](#-observability--observabilidade)
+- [🔐 Security Policy | Política de Segurança](#-security-policy--política-de-segurança)
+- [🧪 A/B Testing](#-ab-testing)
+- [🧠 Conclusion | Conclusão](#-conclusion--conclusão)
 
-This project demonstrates how to deploy a sample web application with canary deployment strategy using Istio service mesh on a local Kind Kubernetes cluster, managed and deployed with Helm charts.
+---
 
-✅  Prerequisites
+## 🎯 Project Goal | Objetivo do Projeto
+
+**🇺🇸** Create a reproducible local lab to experiment with:
+- Istio Service Mesh
+- Helm-based deployments
+- Canary releases and traffic shifting
+- HTTP routing, A/B testing
+- Security via `AuthorizationPolicy`
+- Metrics and traffic visualization with Kiali, Prometheus, and Grafana
 
- 🐳  Kind (Kubernetes in Docker) installed for local Kubernetes cluster
+**🇧🇷** Criar um laboratório local reprodutível para praticar:
+- Istio Service Mesh
+- Deployments com Helm
+- Canary releases e redirecionamento de tráfego
+- Roteamento HTTP e testes A/B
+- Políticas de segurança com `AuthorizationPolicy`
+- Visualização de métricas com Kiali, Prometheus e Grafana
 
- 🌐  Istio service mesh installed and configured on the cluster
+---
 
- ⛵  Helm package manager installed for Kubernetes applications
+## ✅ Features | Funcionalidades
 
- 🔧  Basic knowledge of Kubernetes, Helm charts, Istio Gateway, and VirtualServices
+- 🌐 **Kind cluster** (Kubernetes local em Docker)
+- ⚙️ **Helm deploy** de múltiplas versões do app
+- 🎯 **Canary deployment** com Istio (VirtualService e DestinationRule)
+- 🔐 **Segurança de rede** com `AuthorizationPolicy`
+- 📊 **Monitoramento completo** com Kiali, Prometheus e Grafana
+- 🧪 **A/B Testing** via headers HTTP
 
+---
 
-🧱 Summary of What Was Done
+## 🧱 Architecture | Arquitetura
 
- 🛠️   Setup the Kubernetes Cluster with Kind
+```
++-------------------+        +-------------------+
+|    Prometheus     |<------->     Grafana       |
++-------------------+        +-------------------+
 
-        Installed Kind and created a local Kubernetes cluster to simulate a production-like environment on a developer machine.
+        ▲
+        │
++-------------------+        +-------------------+
+|      Kiali        |<------->   Istio Control   |
++-------------------+        |       Plane       |
+                             +-------------------+
+                                     |
+                           +-------------------+
+                           |   Istio Ingress   |
+                           |    Gateway        |
+                           +-------------------+
+                                /         \
+                    +-------------+   +-------------+
+                    | webapp v1   |   | webapp v2   |
+                    +-------------+   +-------------+
+```
 
- 🛠️  Installed Istio Service Mesh
+---
 
-        Deployed Istio control plane and configured ingress gateways within the Kind cluster to enable service mesh capabilities like traffic routing, observability, and security.
+## 📁 File Structure | Estrutura dos Arquivos
 
- 📦  Configured Helm
+```bash
+.
+├── helm/                  # Helm chart da aplicação
+├── istio-config/          # VirtualService, Gateway, DestinationRule
+├── addons/                # Instalação de Kiali, Prometheus e Grafana
+├── authorization-policy.yaml
+└── kind-config.yaml
+```
 
-        Installed Helm as the package manager to simplify deploying and managing Kubernetes manifests.
+---
 
-        Created and customized Helm charts for the sample web application and Istio Gateway resources.
+## 🚀 Usage Guide | Guia de Uso
 
- 🔀  Defined Istio Gateway and VirtualService Resources
+### 1. 🔧 Create Cluster | Criar Cluster
 
-        Created an Istio Gateway resource named webapp-gateway to expose the application on port 80.
+```bash
+kind create cluster --name istio-lab --config kind-config.yaml
+```
 
-        Created VirtualService resources to define traffic routing rules, directing requests between different versions of the application (webapp-v1 and webapp-v2) to enable canary deployments.
+### 2. 🚀 Install Istio
 
- 🔀  Deployed Application Pods and Services
+```bash
+istioctl install --set profile=demo -y
+```
 
-        Successfully deployed the application pods for versions 1 and 2, both running and ready.
+### 3. 📦 Deploy App with Helm
 
-        Verified the istio-ingress service with type LoadBalancer to manage incoming traffic.
+```bash
+helm install webapp ./helm/webapp --set image.tag=v1
+helm upgrade webapp ./helm/webapp --set image.tag=v2 --reuse-values
+```
 
- 🔍  Troubleshooting and Accessing the Service
+---
 
-        Initially tried accessing the service via NodePorts, which failed due to local cluster network constraints.
+## 📊 Observability | Observabilidade
 
-        Solved the access issue by forwarding the Istio ingress service port to localhost using kubectl port-forward, enabling access to the service through http://localhost:8080.
+### ▶️ Kiali
 
-  ✅ Verified Final Access
+```bash
+kubectl apply -f addons/kiali.yaml
+kubectl port-forward -n istio-system svc/kiali 20001:20001
+```
+Access | Acesse: http://localhost:20001
 
-        Confirmed the web application was reachable and functioning as expected through the forwarded port URL.
+---
 
-📌 This setup provides a foundational environment to experiment with Kubernetes service mesh features, Helm deployment automation, and canary release patterns in a controlled local setting.
+### 📈 Prometheus
 
+```bash
+kubectl apply -f addons/prometheus.yaml
+kubectl port-forward -n istio-system svc/prometheus 9090:9090
+```
+Access | Acesse: http://localhost:9090
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
-🎯 Objetivo do Projeto
+### 📊 Grafana
 
-O objetivo deste projeto foi criar um ambiente local com Kubernetes, configurado com Istio Service Mesh e utilizando Helm para deploy, com suporte a Canary Deployment. No final, o aplicativo deveria estar acessível via URL, com roteamento de tráfego controlado entre duas versões da aplicação (v1 e v2).
+```bash
+kubectl apply -f addons/grafana.yaml
+kubectl port-forward -n istio-system svc/grafana 3000:3000
+```
+Access | Acesse: http://localhost:3000  
+Credentials | Credenciais: `admin / admin`
 
-✅ Pré-requisitos instalados
+---
 
-Antes de começar, foi necessário instalar:
-🐳 Docker
+## 🔐 Security Policy | Política de Segurança
 
-    Obrigatório para rodar clusters com Kind
+```bash
+kubectl apply -f authorization-policy.yaml
+```
 
-🔧 Kind (Kubernetes in Docker)
+**Test**
 
-    Ferramenta para rodar clusters Kubernetes localmente usando contêineres
+```bash
+kubectl create ns test-ns
+kubectl run busybox --rm -it -n test-ns --image=busybox -- wget -qO- http://webapp.default.svc.cluster.local  # ❌ Denied
 
-    Instalado via:
+kubectl run busybox --rm -it --image=busybox -- wget -qO- http://webapp.default.svc.cluster.local  # ✅ Allowed
+```
 
-    go install sigs.k8s.io/kind@latest
+---
 
-⛵ Helm
+## 🧪 A/B Testing
 
-    Gerenciador de pacotes Kubernetes (usado para criar e instalar charts)
+```bash
+kubectl apply -f istio-config/webapp-ingress-vs.yaml
 
-    Instalado via:
+curl -H "user: test-user" http://localhost:8080/  # goes to v2
+curl http://localhost:8080/                      # goes to v1
+```
 
-    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+---
 
-🌐 Istio + istioctl
+## 🧠 Conclusion | Conclusão
 
-    Ferramenta para gerenciamento de malha de serviços (Service Mesh)
+**🇺🇸**  
+This project provides a practical and educational sandbox for understanding modern delivery, security and monitoring strategies in Kubernetes environments with Istio.
 
-    Instalado via:
+**🇧🇷**  
+Este projeto oferece um ambiente prático e educativo para entender estratégias modernas de entrega, segurança e monitoramento em ambientes Kubernetes com Istio.
 
-    curl -L https://istio.io/downloadIstio | sh -
-    export PATH="$PATH:/caminho/para/istio/bin"
+---
 
-🧱 1. Criação do cluster Kind
-
-    Criou um cluster com um arquivo de configuração personalizado, habilitando a exposição de portas:
-
-    kind: Cluster
-    apiVersion: kind.x-k8s.io/v1alpha4
-    ...
-
-🛠️ 2. Instalação do Istio
-
-    Criado namespace e aplicado o operador Istio:
-
-    istioctl install --set profile=demo -y
-    kubectl label namespace default istio-injection=enabled
-
-📦 3. Criação e deploy da aplicação com Helm
-
-    Criado Helm Chart customizado (webapp-chart)
-
-        Dois Deployment: webapp-v1 e webapp-v2
-
-        Um Service expondo ambos os pods
-
-    Instalado com:
-
-    helm install webapp ./webapp-chart
-
-🔀 4. Configuração do Istio Gateway e VirtualServices
-
-    Criado recurso Gateway (webapp-gateway) para aceitar requisições HTTP externas
-
-    Criado VirtualService webapp-ingress-vs apontando para o Gateway
-
-    Criado VirtualService webapp-virtualservice com configuração de Canary Routing:
-
-        Requisições HTTP para webapp são divididas entre v1 e v2 com pesos distintos (ex: 80/20)
-
-🔍 5. Diagnóstico e verificação
-
-    Verificou recursos criados com:
-
-kubectl get svc -n istio-system
-kubectl get gateway -A
-kubectl get virtualservice -A
-kubectl get pods -A
-
-Tentativa inicial de acesso via NodePort falhou:
-
-    curl http://localhost:32282/  # ❌ Connection refused
-
-🔁 6. Correção com Port Forward
-
-    Usou o seguinte comando para expor o serviço localmente:
-
-kubectl port-forward -n istio-system svc/istio-ingress 8080:80
-
-Com isso, acesso ao app funcionou corretamente:
-
-    curl http://localhost:8080/
-
-✅ Resultado final
-
-    Aplicação acessível via http://localhost:8080/
-
-    Canary Deployment funcionando entre v1 e v2
-
-    Tudo gerenciado via Helm, rodando em Kind com Istio configurado
-
-📌 Recursos usados no cluster
-Recurso	Descrição
-Kind	Cluster local para testes
-Helm	Deploy automatizado da aplicação
-Istio	Service Mesh com injeção automática de sidecar
-Gateway	Exposição externa do app
-VirtualService	Roteamento de tráfego e Canary Deployment
-Port-forward	Solução local para expor o app
+📌 **Repo created for learning purposes — feel free to fork and adapt.**  
+📌 **Repositório criado para fins educacionais — sinta-se à vontade para clonar e adaptar.**
